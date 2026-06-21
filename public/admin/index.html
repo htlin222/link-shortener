@@ -33,8 +33,11 @@
     .wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 80px; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
-    .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
-    .who { font-size: 13px; color: var(--muted); }
+    .badge { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 9px;
+             background: var(--accent); color: #fff; box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent); }
+    .badge svg { width: 17px; height: 17px; }
+    .who { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+    .who svg { width: 14px; height: 14px; }
     .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
     .card + .card { margin-top: 18px; }
     label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 6px; text-transform: uppercase; letter-spacing: .04em; }
@@ -49,18 +52,21 @@
     button {
       font: inherit; cursor: pointer; border: 1px solid var(--border); border-radius: 10px;
       padding: 11px 16px; background: var(--panel-2); color: var(--text); transition: .12s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
     }
     button:hover { border-color: var(--accent); }
     button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
     button.primary:hover { background: var(--accent-press); }
     button:disabled { opacity: .5; cursor: not-allowed; }
+    button svg { width: 16px; height: 16px; flex: none; }
     .actions { display: flex; gap: 10px; margin-top: 16px; }
     .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
     .chip { font-size: 13px; padding: 6px 11px; border-radius: 999px; border: 1px dashed var(--accent); color: var(--accent); background: transparent; }
-    .msg { margin-top: 14px; padding: 10px 12px; border-radius: 10px; font-size: 14px; display: none; }
-    .msg.err { display: block; background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
-    .msg.ok  { display: block; background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+    .msg { margin-top: 14px; padding: 10px 12px; border-radius: 10px; font-size: 14px; display: none; align-items: center; gap: 8px; }
+    .msg svg { width: 16px; height: 16px; flex: none; }
+    .msg.err { display: flex; background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+    .msg.ok  { display: flex; background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
     h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 12px; }
     .links { list-style: none; margin: 0; padding: 0; }
     .link { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-top: 1px solid var(--border); }
@@ -71,15 +77,16 @@
     .link .target { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .link .btns { display: flex; gap: 6px; }
     .icon { padding: 7px 10px; font-size: 13px; }
+    .icon.danger { color: var(--danger); }
     .empty { color: var(--muted); font-size: 14px; padding: 8px 4px; }
-    .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; }
+    .spin { display: inline-block; width: 15px; height: 15px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; }
     @keyframes s { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="brand"><span class="dot"></span> link shortener</div>
+      <div class="brand"><span class="badge" id="brandIcon"></span> link shortener</div>
       <div class="who" id="who"></div>
     </header>
 
@@ -94,13 +101,13 @@
           <div class="prefix" id="prefix"></div>
           <div class="slug-row">
             <input id="slug" type="text" placeholder="my-name" autocomplete="off" />
-            <button id="suggest" type="button" title="Suggest slugs with AI">✨ Suggest</button>
+            <button id="suggest" type="button" title="Suggest slugs with AI"></button>
           </div>
           <div class="chips" id="chips"></div>
         </div>
       </div>
       <div class="actions">
-        <button id="create" class="primary" type="button">Create short link</button>
+        <button id="create" class="primary" type="button"></button>
       </div>
       <div class="msg" id="msg"></div>
     </div>
@@ -112,9 +119,29 @@
   </div>
 
   <script>
+    // Lucide icons (https://lucide.dev/icons/) inlined as SVG — no external dependency.
+    const svg = (paths) =>
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+    const ICON = {
+      link2:    svg('<path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/>'),
+      arrow:    svg('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'),
+      sparkles: svg('<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>'),
+      copy:     svg('<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>'),
+      check:    svg('<path d="M20 6 9 17l-5-5"/>'),
+      trash:    svg('<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>'),
+      user:     svg('<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
+      external: svg('<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'),
+      alert:    svg('<circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>'),
+      spin:     '<span class="spin"></span>',
+    };
+    const lbl = (icon, text) => `${icon}<span>${text}</span>`;
+
     const $ = (id) => document.getElementById(id);
     const origin = location.origin;
     $("prefix").textContent = origin + "/";
+    $("brandIcon").innerHTML = ICON.link2;
+    $("suggest").innerHTML = lbl(ICON.sparkles, "Suggest");
+    $("create").innerHTML = lbl(ICON.arrow, "Create short link");
 
     const api = async (path, opts) => {
       const r = await fetch("/api" + path, {
@@ -128,16 +155,16 @@
     };
 
     const showMsg = (text, kind) => {
-      const m = $("msg");
-      m.textContent = text;
-      m.className = "msg " + kind;
+      const icon = kind === "ok" ? ICON.check : ICON.alert;
+      $("msg").innerHTML = icon + "<span>" + escapeHtml(text) + "</span>";
+      $("msg").className = "msg " + kind;
     };
     const clearMsg = () => { $("msg").className = "msg"; };
 
     async function loadMe() {
       try {
         const { email } = await api("/me");
-        $("who").textContent = email ? "signed in as " + email : "";
+        $("who").innerHTML = email ? ICON.user + "<span>" + escapeHtml(email) + "</span>" : "";
       } catch {}
     }
 
@@ -156,12 +183,12 @@
           li.className = "link";
           li.innerHTML = `
             <div class="info">
-              <div class="short"><a href="${short}" target="_blank" rel="noopener">/${l.slug}</a></div>
+              <div class="short"><a href="${escapeAttr(short)}" target="_blank" rel="noopener">/${escapeHtml(l.slug)} ${ICON.external}</a></div>
               <div class="target" title="${escapeAttr(l.url)}">${escapeHtml(l.url)}</div>
             </div>
             <div class="btns">
-              <button class="icon" data-copy="${escapeAttr(short)}">Copy</button>
-              <button class="icon" data-del="${escapeAttr(l.slug)}" style="color:var(--danger)">Delete</button>
+              <button class="icon" data-copy="${escapeAttr(short)}">${lbl(ICON.copy, "Copy")}</button>
+              <button class="icon danger" data-del="${escapeAttr(l.slug)}">${lbl(ICON.trash, "Delete")}</button>
             </div>`;
           list.appendChild(li);
         }
@@ -175,8 +202,8 @@
       const del = e.target.closest("[data-del]");
       if (copy) {
         await navigator.clipboard.writeText(copy.dataset.copy);
-        const t = copy.textContent; copy.textContent = "Copied!";
-        setTimeout(() => (copy.textContent = t), 1200);
+        copy.innerHTML = lbl(ICON.check, "Copied");
+        setTimeout(() => (copy.innerHTML = lbl(ICON.copy, "Copy")), 1200);
       }
       if (del) {
         if (!confirm("Delete /" + del.dataset.del + " ?")) return;
@@ -193,7 +220,7 @@
       const slug = $("slug").value.trim();
       if (!url) return showMsg("Enter a destination URL.", "err");
       const btn = $("create");
-      btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Creating…';
+      btn.disabled = true; btn.innerHTML = lbl(ICON.spin, "Creating…");
       try {
         const res = await api("/links", { method: "POST", body: JSON.stringify({ url, slug }) });
         const short = origin + "/" + res.slug;
@@ -204,7 +231,7 @@
       } catch (e) {
         showMsg(e.message, "err");
       } finally {
-        btn.disabled = false; btn.textContent = "Create short link";
+        btn.disabled = false; btn.innerHTML = lbl(ICON.arrow, "Create short link");
       }
     });
 
@@ -213,7 +240,7 @@
       const url = $("url").value.trim();
       if (!url) return showMsg("Enter a destination URL first.", "err");
       const btn = $("suggest");
-      btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+      btn.disabled = true; btn.innerHTML = ICON.spin;
       $("chips").innerHTML = "";
       try {
         const { suggestions } = await api("/suggest", { method: "POST", body: JSON.stringify({ url }) });
@@ -227,7 +254,7 @@
       } catch (e) {
         showMsg(e.message, "err");
       } finally {
-        btn.disabled = false; btn.textContent = "✨ Suggest";
+        btn.disabled = false; btn.innerHTML = lbl(ICON.sparkles, "Suggest");
       }
     });
 
