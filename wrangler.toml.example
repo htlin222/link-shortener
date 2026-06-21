@@ -4,6 +4,7 @@ name = "__NAME__"
 main = "src/index.js"
 compatibility_date = "2024-12-01"
 account_id = "__ACCOUNT_ID__"
+workers_dev = false  # only serve on the custom domain (the gated route)
 
 # Serve the admin UI / static files from ./public, exposed to the Worker as ASSETS.
 [assets]

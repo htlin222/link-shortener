@@ -132,6 +132,25 @@ host — i.e. `/<slug>` — is never matched by the app and stays public. Re-run
 > If you use Claude Code, the [`cf-gate`](https://github.com/) skill does exactly
 > this; `scripts/gate.sh` is a self-contained version so anyone can reproduce it.
 
+## Security model
+
+- **The Access gate is the only thing protecting `/admin` and `/api`.** The Worker
+  trusts the `Cf-Access-Authenticated-User-Email` header that Cloudflare Access
+  injects, and refuses any `/api` request that arrives without it (HTTP 403). That
+  header is only trustworthy because the gated hostname is the *sole* way to reach
+  the Worker.
+- **`workers_dev = false`** is set so the Worker is **not** also exposed on an
+  un-gated `*.workers.dev` URL. Leaving it enabled would let anyone bypass Access
+  and spoof that header — keep it `false`.
+- Only `http(s)` destinations are accepted, and slugs are restricted to
+  `[A-Za-z0-9_-]`, so the redirect `Location` header can’t be injected and
+  `javascript:`/`data:` targets are rejected.
+- Short links are intentionally **public open redirects** — anyone with the link
+  is sent onward. Don’t mint links to sensitive internal URLs.
+- Optional hardening (not enabled): verify the `Cf-Access-Jwt-Assertion` JWT
+  against `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs` inside the
+  Worker for defense-in-depth.
+
 ## Cost
 
 Everything here fits comfortably in Cloudflare’s free tier for personal use:

@@ -104,10 +104,14 @@ async function handleApi(request, env, url) {
   }
 
   if (path === "/api/links" && method === "GET") {
-    const list = await env.LINKS.list({ prefix: "link:" });
-    const links = list.keys
-      .map((k) => ({ slug: k.name.slice(5), ...(k.metadata || {}) }))
-      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const links = [];
+    let cursor;
+    do {
+      const page = await env.LINKS.list({ prefix: "link:", cursor });
+      for (const k of page.keys) links.push({ slug: k.name.slice(5), ...(k.metadata || {}) });
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+    links.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     return json({ links });
   }
 
@@ -174,16 +178,22 @@ async function uniqueRandomSlug(env, len = 6) {
 async function suggestSlugs(env, target) {
   if (!env.AI || !target) return [];
   let context = target;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4000);
   try {
     const r = await fetch(target, {
       headers: { "user-agent": "link-shortener-bot/1.0" },
       cf: { cacheTtl: 300, cacheEverything: true },
+      signal: ctrl.signal,
+      redirect: "follow",
     });
-    const html = await r.text();
+    const html = (await r.text()).slice(0, 100_000);
     const m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     if (m) context = m[1].trim().slice(0, 120) + " — " + target;
   } catch {
     /* title fetch is best-effort */
+  } finally {
+    clearTimeout(timer);
   }
 
   let raw = "";
