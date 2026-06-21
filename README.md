@@ -10,6 +10,8 @@
 [![Gated by Cloudflare Access](https://img.shields.io/badge/Auth-Cloudflare%20Access-F38020?logo=cloudflare&logoColor=white)](https://www.cloudflare.com/zero-trust/products/access/)
 [![Deploy with Wrangler](https://img.shields.io/badge/Deploy-Wrangler-F38020?logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/workers/wrangler/)
 
+![link-shortener admin UI — mint custom short links on Cloudflare Workers with AI slug suggestions, gated by Cloudflare Access](https://img-hosting.hsieh-ting-lin.workers.dev/i/YL5gJGD.png)
+
 A self-hosted URL shortener that runs entirely on the **Cloudflare** free tier:
 
 - **One Cloudflare Worker** serves everything — admin UI, JSON API, and the redirects.
