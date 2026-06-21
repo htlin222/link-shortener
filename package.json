@@ -1,0 +1,17 @@
+{
+  "name": "link-shortener",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Self-hosted URL shortener on a single Cloudflare Worker, gated with Cloudflare Access.",
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "gate": "bash scripts/gate.sh gate",
+    "ungate": "bash scripts/gate.sh ungate",
+    "gate:status": "bash scripts/gate.sh status"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

@@ -1,0 +1,23 @@
+# Copy this file to `config.toml` and fill in your values.
+#   cp config.example.toml config.toml
+# `config.toml` is gitignored — it holds YOUR account + domain and never gets committed.
+
+# Cloudflare account that owns the domain (Dashboard → right sidebar → Account ID).
+account_id = "your-cloudflare-account-id"
+
+# Name of the Worker (also used to name the KV namespace).
+worker_name = "link-shortener"
+
+# The hostname your short links live on, e.g. link.example.com.
+# Short links become https://<hostname>/<slug>.
+hostname = "link.example.com"
+
+# The Cloudflare zone (root domain) that owns `hostname`.
+zone_name = "example.com"
+
+# Emails allowed through the Cloudflare Access login gate on /admin and /api.
+# Space-separated. Use @example.com to allow everyone on a domain.
+gate_emails = "you@example.com"
+
+# Filled in automatically by `pnpm run setup` after it creates the KV namespace.
+kv_id = ""

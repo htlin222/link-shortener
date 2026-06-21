@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>link · admin</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0b0d12;
+      --panel: #141823;
+      --panel-2: #1b2030;
+      --border: #232a3a;
+      --text: #e6e8ee;
+      --muted: #8b93a7;
+      --accent: #7aa2ff;
+      --accent-press: #5b86f5;
+      --danger: #ff6b6b;
+      --ok: #3ddc97;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f6f7fb; --panel: #fff; --panel-2: #f0f2f8; --border: #e2e6ef;
+        --text: #1a1d28; --muted: #6b7283; --accent: #2f6bff; --accent-press: #1c54e0;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 80px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+    .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+    .who { font-size: 13px; color: var(--muted); }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+    .card + .card { margin-top: 18px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 6px; text-transform: uppercase; letter-spacing: .04em; }
+    input[type=text], input[type=url] {
+      width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--panel-2); color: var(--text); font-size: 15px;
+    }
+    input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+    .row { display: grid; gap: 14px; }
+    .slug-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+    .prefix { color: var(--muted); font-size: 13px; margin-bottom: 6px; word-break: break-all; }
+    button {
+      font: inherit; cursor: pointer; border: 1px solid var(--border); border-radius: 10px;
+      padding: 11px 16px; background: var(--panel-2); color: var(--text); transition: .12s;
+    }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    button.primary:hover { background: var(--accent-press); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .actions { display: flex; gap: 10px; margin-top: 16px; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip { font-size: 13px; padding: 6px 11px; border-radius: 999px; border: 1px dashed var(--accent); color: var(--accent); background: transparent; }
+    .msg { margin-top: 14px; padding: 10px 12px; border-radius: 10px; font-size: 14px; display: none; }
+    .msg.err { display: block; background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+    .msg.ok  { display: block; background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 12px; }
+    .links { list-style: none; margin: 0; padding: 0; }
+    .link { display: flex; align-items: center; gap: 12px; padding: 12px 4px; border-top: 1px solid var(--border); }
+    .link:first-child { border-top: 0; }
+    .link .info { min-width: 0; flex: 1; }
+    .link .short { font-weight: 600; }
+    .link .short a { color: var(--accent); text-decoration: none; }
+    .link .target { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .link .btns { display: flex; gap: 6px; }
+    .icon { padding: 7px 10px; font-size: 13px; }
+    .empty { color: var(--muted); font-size: 14px; padding: 8px 4px; }
+    .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; }
+    @keyframes s { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><span class="dot"></span> link shortener</div>
+      <div class="who" id="who"></div>
+    </header>
+
+    <div class="card">
+      <div class="row">
+        <div>
+          <label for="url">Destination URL</label>
+          <input id="url" type="url" placeholder="https://example.com/some/very/long/page" autocomplete="off" />
+        </div>
+        <div>
+          <label for="slug">Custom slug <span style="text-transform:none">(optional — leave blank for random)</span></label>
+          <div class="prefix" id="prefix"></div>
+          <div class="slug-row">
+            <input id="slug" type="text" placeholder="my-name" autocomplete="off" />
+            <button id="suggest" type="button" title="Suggest slugs with AI">✨ Suggest</button>
+          </div>
+          <div class="chips" id="chips"></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="create" class="primary" type="button">Create short link</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="card">
+      <h2>Your links</h2>
+      <ul class="links" id="list"><li class="empty">Loading…</li></ul>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const origin = location.origin;
+    $("prefix").textContent = origin + "/";
+
+    const api = async (path, opts) => {
+      const r = await fetch("/api" + path, {
+        headers: { "content-type": "application/json" },
+        ...opts,
+      });
+      let data = {};
+      try { data = await r.json(); } catch {}
+      if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+      return data;
+    };
+
+    const showMsg = (text, kind) => {
+      const m = $("msg");
+      m.textContent = text;
+      m.className = "msg " + kind;
+    };
+    const clearMsg = () => { $("msg").className = "msg"; };
+
+    async function loadMe() {
+      try {
+        const { email } = await api("/me");
+        $("who").textContent = email ? "signed in as " + email : "";
+      } catch {}
+    }
+
+    async function loadLinks() {
+      const list = $("list");
+      try {
+        const { links } = await api("/links");
+        if (!links.length) {
+          list.innerHTML = '<li class="empty">No links yet — create your first one above.</li>';
+          return;
+        }
+        list.innerHTML = "";
+        for (const l of links) {
+          const short = origin + "/" + l.slug;
+          const li = document.createElement("li");
+          li.className = "link";
+          li.innerHTML = `
+            <div class="info">
+              <div class="short"><a href="${short}" target="_blank" rel="noopener">/${l.slug}</a></div>
+              <div class="target" title="${escapeAttr(l.url)}">${escapeHtml(l.url)}</div>
+            </div>
+            <div class="btns">
+              <button class="icon" data-copy="${escapeAttr(short)}">Copy</button>
+              <button class="icon" data-del="${escapeAttr(l.slug)}" style="color:var(--danger)">Delete</button>
+            </div>`;
+          list.appendChild(li);
+        }
+      } catch (e) {
+        list.innerHTML = '<li class="empty">' + escapeHtml(e.message) + "</li>";
+      }
+    }
+
+    $("list").addEventListener("click", async (e) => {
+      const copy = e.target.closest("[data-copy]");
+      const del = e.target.closest("[data-del]");
+      if (copy) {
+        await navigator.clipboard.writeText(copy.dataset.copy);
+        const t = copy.textContent; copy.textContent = "Copied!";
+        setTimeout(() => (copy.textContent = t), 1200);
+      }
+      if (del) {
+        if (!confirm("Delete /" + del.dataset.del + " ?")) return;
+        try {
+          await api("/links/" + encodeURIComponent(del.dataset.del), { method: "DELETE" });
+          loadLinks();
+        } catch (err) { showMsg(err.message, "err"); }
+      }
+    });
+
+    $("create").addEventListener("click", async () => {
+      clearMsg();
+      const url = $("url").value.trim();
+      const slug = $("slug").value.trim();
+      if (!url) return showMsg("Enter a destination URL.", "err");
+      const btn = $("create");
+      btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Creating…';
+      try {
+        const res = await api("/links", { method: "POST", body: JSON.stringify({ url, slug }) });
+        const short = origin + "/" + res.slug;
+        await navigator.clipboard.writeText(short).catch(() => {});
+        showMsg("Created " + short + " (copied to clipboard)", "ok");
+        $("url").value = ""; $("slug").value = ""; $("chips").innerHTML = "";
+        loadLinks();
+      } catch (e) {
+        showMsg(e.message, "err");
+      } finally {
+        btn.disabled = false; btn.textContent = "Create short link";
+      }
+    });
+
+    $("suggest").addEventListener("click", async () => {
+      clearMsg();
+      const url = $("url").value.trim();
+      if (!url) return showMsg("Enter a destination URL first.", "err");
+      const btn = $("suggest");
+      btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+      $("chips").innerHTML = "";
+      try {
+        const { suggestions } = await api("/suggest", { method: "POST", body: JSON.stringify({ url }) });
+        if (!suggestions.length) { showMsg("No suggestions — type your own slug.", "err"); return; }
+        for (const s of suggestions) {
+          const c = document.createElement("button");
+          c.type = "button"; c.className = "chip"; c.textContent = s;
+          c.onclick = () => { $("slug").value = s; };
+          $("chips").appendChild(c);
+        }
+      } catch (e) {
+        showMsg(e.message, "err");
+      } finally {
+        btn.disabled = false; btn.textContent = "✨ Suggest";
+      }
+    });
+
+    function escapeHtml(s) { return String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+    function escapeAttr(s) { return String(s).replace(/"/g, "&quot;"); }
+
+    loadMe();
+    loadLinks();
+  </script>
+</body>
+</html>

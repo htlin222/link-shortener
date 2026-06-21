@@ -1,0 +1,22 @@
+# Secrets & per-user config — never commit these
+config.toml
+wrangler.toml
+.cf-gate.env
+.dev.vars
+.env
+.env.*
+
+# Cloudflare / wrangler
+.wrangler/
+.mf/
+
+# Node
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+*.bak
+.idea/
+.vscode/

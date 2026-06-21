@@ -1,0 +1,25 @@
+# Template — `pnpm run setup` renders this into `wrangler.toml` using config.toml.
+# You normally never edit this by hand. `wrangler.toml` is gitignored.
+name = "__NAME__"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+account_id = "__ACCOUNT_ID__"
+
+# Serve the admin UI / static files from ./public, exposed to the Worker as ASSETS.
+[assets]
+binding = "ASSETS"
+directory = "./public"
+
+# KV namespace that stores slug → URL records.
+[[kv_namespaces]]
+binding = "LINKS"
+id = "__KV_ID__"
+
+# Workers AI — powers the "✨ Suggest" slug button.
+[ai]
+binding = "AI"
+
+# Serve the Worker on your custom domain (wrangler manages the DNS record).
+[[routes]]
+pattern = "__HOSTNAME__"
+custom_domain = true

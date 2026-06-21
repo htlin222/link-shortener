@@ -1,0 +1,137 @@
+# 🔗 link-shortener
+
+A self-hosted URL shortener that runs entirely on the **Cloudflare** free tier:
+
+- **One Cloudflare Worker** serves everything — admin UI, JSON API, and the redirects.
+- **Workers KV** stores `slug → URL`.
+- **Workers AI** powers a “✨ Suggest” button that proposes memorable slugs from the target page.
+- **Cloudflare Access (Zero Trust)** is the login gate — only your allow-listed emails can mint links, while the short links themselves stay **public**.
+
+Short links look like `https://link.yourdomain.com/my-name`.
+
+```
+┌──────────────────────────── one Worker on link.yourdomain.com ────────────────────────────┐
+│  /admin           → admin UI ........... 🔒 Cloudflare Access (login required)              │
+│  /api/*           → JSON API ........... 🔒 Cloudflare Access (login required)              │
+│  /<slug>          → 302 → target URL ... 🌍 public, no login                                 │
+└────────────────────────────────────────────────────────────────────────────────────────────┘
+        slug → URL kept in Workers KV   ·   slug suggestions via Workers AI
+```
+
+## Why this design
+
+Cloudflare Access normally gates a whole hostname — that would force a login on
+your short links too. Instead, this project creates Access apps scoped to the
+**`/admin` and `/api` paths only**, so the redirects remain open to the world
+while the mint UI stays private. No GUI clicks required: it’s all API.
+
+---
+
+## Prerequisites
+
+- A **Cloudflare account** with a domain (zone) added to it.
+- [`pnpm`](https://pnpm.io) and Node 18+.
+- [`wrangler`](https://developers.cloudflare.com/workers/wrangler/) (installed as a dev dependency by `pnpm install`).
+- `jq` and `curl` (for the gate script).
+- A Cloudflare **API token** for the gate, with the `Access: Apps and Policies — Edit` permission.
+
+## Quick start
+
+```bash
+git clone https://github.com/htlin222/link-shortener.git
+cd link-shortener
+pnpm install
+
+# 1. Configure (domain + account). config.toml is gitignored.
+cp config.example.toml config.toml
+$EDITOR config.toml          # set account_id, hostname, zone_name, gate_emails
+
+# 2. Log in to Cloudflare, create the KV namespace, render wrangler.toml
+wrangler login
+pnpm run setup
+
+# 3. Deploy the Worker to your custom domain
+pnpm run deploy
+
+# 4. Put the login gate in front of /admin and /api
+echo 'CF_API_TOKEN=your-access-token' > .cf-gate.env   # gitignored
+chmod 600 .cf-gate.env
+pnpm run gate
+
+# Done → open https://link.yourdomain.com/admin
+```
+
+`pnpm run setup` writes the KV namespace id back into `config.toml` and renders
+`wrangler.toml` from `wrangler.toml.example`. Both `config.toml` and
+`wrangler.toml` stay out of git.
+
+---
+
+## Configuration (`config.toml`)
+
+| Key           | What it is                                                              |
+| ------------- | ---------------------------------------------------------------------- |
+| `account_id`  | Cloudflare Account ID (Dashboard → right sidebar).                      |
+| `worker_name` | Name of the Worker / KV namespace.                                     |
+| `hostname`    | Where short links live, e.g. `link.example.com`.                        |
+| `zone_name`   | The root domain in Cloudflare that owns `hostname`.                     |
+| `gate_emails` | Space-separated allow-list. Use `@example.com` to allow a whole domain. |
+| `kv_id`       | Filled in automatically by `pnpm run setup`.                            |
+
+## Commands
+
+| Command               | What it does                                                      |
+| --------------------- | ---------------------------------------------------------------- |
+| `pnpm run setup`      | Create the KV namespace and render `wrangler.toml`.              |
+| `pnpm run deploy`     | Publish the Worker (`wrangler deploy`).                          |
+| `pnpm run gate`       | Gate `/admin` + `/api` with Cloudflare Access.                   |
+| `pnpm run gate:status`| Show whether the gates exist.                                    |
+| `pnpm run ungate`     | Remove the gates (the site stays up; it just becomes open).      |
+| `pnpm run dev`        | Run locally. The API is unguarded locally via `DEV=true`.       |
+
+### Local development
+
+```bash
+DEV=true wrangler dev
+```
+
+`DEV=true` lets the API work without a Cloudflare Access identity header so you
+can test the UI on `localhost`. **Never set `DEV` in production** — the deployed
+Worker refuses API writes unless they arrive through the Access gate.
+
+## API
+
+All `/api/*` routes require a valid Cloudflare Access session in production.
+
+| Method & path           | Body                       | Result                                    |
+| ----------------------- | -------------------------- | ----------------------------------------- |
+| `GET /api/me`           | —                          | `{ email }` of the signed-in user.        |
+| `GET /api/links`        | —                          | `{ links: [{slug, url, createdAt, createdBy}] }` |
+| `POST /api/links`       | `{ url, slug? }`           | Creates a link (random slug if omitted).  |
+| `DELETE /api/links/:slug` | —                        | Deletes a link.                           |
+| `POST /api/suggest`     | `{ url }`                  | `{ suggestions: [...] }` from Workers AI. |
+
+## How the gate works
+
+`scripts/gate.sh` creates two Cloudflare Access **self-hosted** applications
+whose `domain` includes a path:
+
+- `link.yourdomain.com/admin`
+- `link.yourdomain.com/api`
+
+Each gets an *allow* policy for your `gate_emails`. Anything else on the host —
+i.e. `/<slug>` — is never matched by an Access app and stays public. Re-running
+`pnpm run gate` updates the apps in place (idempotent).
+
+> If you use Claude Code, the [`cf-gate`](https://github.com/) skill does exactly
+> this; `scripts/gate.sh` is a self-contained version so anyone can reproduce it.
+
+## Cost
+
+Everything here fits comfortably in Cloudflare’s free tier for personal use:
+Workers, KV, Workers AI (with daily free neurons), and Zero Trust (free up to 50
+users).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
