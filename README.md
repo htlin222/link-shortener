@@ -37,6 +37,10 @@ while the mint UI stays private. No GUI clicks required: it’s all API.
 
 ## Quick start
 
+> **Using Claude Code?** Just clone, then run the bundled **`on-board`** skill
+> (`.claude/skills/on-board/`) — it walks you through every step below
+> interactively, with all the gotchas handled. The manual steps follow.
+
 ```bash
 git clone https://github.com/htlin222/link-shortener.git
 cd link-shortener
