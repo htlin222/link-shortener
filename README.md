@@ -113,15 +113,21 @@ All `/api/*` routes require a valid Cloudflare Access session in production.
 
 ## How the gate works
 
-`scripts/gate.sh` creates two Cloudflare Access **self-hosted** applications
-whose `domain` includes a path:
+`scripts/gate.sh` creates **one** Cloudflare Access self-hosted application
+whose `destinations` cover both protected paths:
 
 - `link.yourdomain.com/admin`
 - `link.yourdomain.com/api`
 
-Each gets an *allow* policy for your `gate_emails`. Anything else on the host —
-i.e. `/<slug>` — is never matched by an Access app and stays public. Re-running
-`pnpm run gate` updates the apps in place (idempotent).
+It gets a single *allow* policy for your `gate_emails`. Anything else on the
+host — i.e. `/<slug>` — is never matched by the app and stays public. Re-running
+`pnpm run gate` updates the app in place (idempotent).
+
+> **Why one app, not two?** Each Access application has its own audience (`aud`),
+> and a login cookie is only valid for the app that issued it. If `/admin` and
+> `/api` were separate apps, signing in to the admin UI would *not* authorize the
+> `fetch` calls it makes to `/api` — the browser would fail them with
+> “Failed to fetch”. One app covering both paths shares one session.
 
 > If you use Claude Code, the [`cf-gate`](https://github.com/) skill does exactly
 > this; `scripts/gate.sh` is a self-contained version so anyone can reproduce it.
