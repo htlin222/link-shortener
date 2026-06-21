@@ -21,13 +21,34 @@ A self-hosted URL shortener that runs entirely on the **Cloudflare** free tier:
 
 Short links look like `https://link.yourdomain.com/my-name`.
 
-```
-┌──────────────────────────── one Worker on link.yourdomain.com ────────────────────────────┐
-│  /admin           → admin UI ........... 🔒 Cloudflare Access (login required)              │
-│  /api/*           → JSON API ........... 🔒 Cloudflare Access (login required)              │
-│  /<slug>          → 302 → target URL ... 🌍 public, no login                                 │
-└────────────────────────────────────────────────────────────────────────────────────────────┘
-        slug → URL kept in Workers KV   ·   slug suggestions via Workers AI
+```mermaid
+flowchart TD
+    owner(["👤 You / owner"])
+    world(["🌍 Anyone with a link"])
+    gate{{"🔒 Cloudflare Access<br/>Zero Trust login"}}
+
+    subgraph w["One Cloudflare Worker · link.yourdomain.com"]
+        ui["/admin<br/>mint UI"]
+        api["/api/*<br/>JSON API"]
+        redir["/{slug}<br/>302 redirect"]
+    end
+
+    kv[("Workers KV<br/>slug → URL")]
+    ai{{"Workers AI<br/>slug suggestions"}}
+
+    owner -->|"/admin · /api/*"| gate
+    gate -->|"allowed email"| ui
+    gate -->|"allowed email"| api
+    world -->|"GET /{slug} · public"| redir
+
+    api --> kv
+    redir --> kv
+    api --> ai
+
+    classDef gated fill:#1b2030,stroke:#7aa2ff,color:#e6e8ee;
+    classDef public fill:#12231b,stroke:#3ddc97,color:#e6e8ee;
+    class ui,api gated
+    class redir public
 ```
 
 ## Why this design
