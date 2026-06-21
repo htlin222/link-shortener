@@ -1,5 +1,15 @@
 # 🔗 link-shortener
 
+> A **self-hosted URL shortener on Cloudflare Workers** — mint custom short
+> links on your own domain (`link.you.com/my-name`), behind a **Cloudflare
+> Access** (Zero Trust) login, with **Workers KV** storage and **Workers AI**
+> slug suggestions. Deploys in one command with **Wrangler**.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+[![Gated by Cloudflare Access](https://img.shields.io/badge/Auth-Cloudflare%20Access-F38020?logo=cloudflare&logoColor=white)](https://www.cloudflare.com/zero-trust/products/access/)
+[![Deploy with Wrangler](https://img.shields.io/badge/Deploy-Wrangler-F38020?logo=cloudflare&logoColor=white)](https://developers.cloudflare.com/workers/wrangler/)
+
 A self-hosted URL shortener that runs entirely on the **Cloudflare** free tier:
 
 - **One Cloudflare Worker** serves everything — admin UI, JSON API, and the redirects.
